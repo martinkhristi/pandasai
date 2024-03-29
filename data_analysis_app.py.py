@@ -1,7 +1,6 @@
-# Import necessary libraries
 import streamlit as st
 import pandas as pd
-import seaborn as sns
+# import seaborn as sns  # Removed seaborn dependency
 import matplotlib.pyplot as plt
 import plotly.express as px
 import os
@@ -53,65 +52,5 @@ if uploaded_file is not None:
     st.subheader("General Information")
     st.write(f"Shape of the dataset: {data.shape}")
     st.write(f"Data Types:\n{data.dtypes}")
-    st.write(f"Memory Usage: {data.memory_usage(deep=True).sum()} bytes")
 
-    # Descriptive Statistics
-    st.subheader("Descriptive Statistics")
-    st.write(data.describe())
-    categorical_columns = data.select_dtypes(include=['object', 'category']).columns
-    if len(categorical_columns) > 0:
-        st.write(data[categorical_columns].describe())
 
-    # Missing Values Analysis
-    st.subheader("Missing Values")
-    missing_values = data.isnull().sum()
-    missing_values = missing_values[missing_values > 0]
-    st.write(missing_values)
-    # Optional: Visualize missing values here
-
-    # Correlation Analysis
-    st.subheader("Correlation Analysis")
-    corr_matrix = data.corr().stack().reset_index(name="correlation")
-    high_corr = corr_matrix[corr_matrix['correlation'].abs() > 0.5]
-    high_corr = high_corr[high_corr['level_0'] != high_corr['level_1']]
-    st.write(high_corr)
-    if st.checkbox("Show Correlation Heatmap"):
-        plt.figure(figsize=(10, 7))
-        sns.heatmap(data.corr(), annot=True, cmap='coolwarm')
-        st.pyplot(plt)
-
-    # Load LLMs
-    groq_llm = load_groq_llm()
-    openai_llm = load_openai_llm()
-
-    # SmartDataframe setup for language model interaction
-    df_groq = SmartDataframe(data, config={'llm': groq_llm})
-    df_openai = SmartDataframe(data, config={'llm': openai_llm})
-
-    # User query input for natural language analysis
-    query = st.text_input("Enter your query about the data:")
-    if query:
-        try:
-            response = ""
-            if llm_choice == "Groq":
-                response = df_groq.chat(query)
-            elif llm_choice == "OpenAI":
-                response = df_openai.chat(query)
-            st.write(response)
-        except Exception as e:
-            st.error(f"An error occurred: {e}")
-
-    # Interactive visualization section
-    with st.expander("View Interactive Plot"):
-        plot_type = st.selectbox("Select Plot Type", ["Scatter", "Line", "Bar"])
-        x_col = st.selectbox("Select X-axis Column", data.columns)
-        y_col = st.selectbox("Select Y-axis Column", data.columns)
-
-        if plot_type == "Scatter":
-            fig = px.scatter(data, x=x_col, y=y_col)
-        elif plot_type == "Line":
-            fig = px.line(data, x=x_col, y=y_col)
-        else:
-            fig = px.bar(data, x=x_col, y=y_col)
-
-        st.plotly_chart(fig)
